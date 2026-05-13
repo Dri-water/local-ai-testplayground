@@ -1,6 +1,6 @@
 import './style.css'
 
-const API = 'http://localhost:3001/api'
+const API = '/api'
 const app = document.getElementById('app')
 
 // State
