@@ -1,14 +1,13 @@
 {
-  "name": "vite-app",
+  "name": "fullstack-template",
   "private": true,
-  "version": "1.0.0",
-  "type": "module",
+  "workspaces": ["apps/*"],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "concurrently \"npm run dev --workspace=apps/server\" \"npm run dev --workspace=apps/web\"",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:server": "npm run dev --workspace=apps/server",
+    "db:init": "node apps/server/src/db-init.js",
+    "build": "npm run build --workspace=apps/web"
   },
-  "devDependencies": {
-    "vite": "^5.0.0"
-  }
+  "devDependencies": { "concurrently": "^8.2.2" }
 }
