@@ -6,8 +6,6 @@ const app = document.getElementById('app')
 // State
 let view = 'threads' // 'threads' | 'thread'
 let currentThreadId = null
-let threads = []
-let posts = []
 
 // ── API helpers ──
 async function api(path, opts = {}) {
@@ -27,54 +25,60 @@ function render() {
         <header>
           <h1 class="logo">/mb/ - Message Board</h1>
         </header>
-        <button class="btn new-thread" onclick="startNewThread()">+ New Thread</button>
+        <button id="new-thread-btn" class="btn new-thread">+ New Thread</button>
         <div id="thread-list"></div>
       </div>`
+    document.getElementById('new-thread-btn').addEventListener('click', startNewThread)
     renderThreadList()
   } else {
     app.innerHTML = `
       <div class="container">
         <header>
-          <button class="btn back" onclick="goBack()">← Back</button>
+          <button id="back-btn" class="btn back">← Back</button>
           <h1 class="logo">/mb/ - Message Board</h1>
         </header>
         <div id="thread-view"></div>
       </div>`
+    document.getElementById('back-btn').addEventListener('click', goBack)
     renderThreadView()
   }
 }
 
 async function renderThreadList() {
   try {
-    threads = await api('/threads')
-  } catch { threads = [] }
-  const list = document.getElementById('thread-list')
-  if (threads.length === 0) {
-    list.innerHTML = '<p class="empty">No threads yet. Start one!</p>'
-    return
+    const threads = await api('/threads')
+    const list = document.getElementById('thread-list')
+    if (threads.length === 0) {
+      list.innerHTML = '<p class="empty">No threads yet. Start one!</p>'
+      return
+    }
+    list.innerHTML = ''
+    threads.forEach(t => {
+      const card = document.createElement('div')
+      card.className = 'thread-card'
+      card.innerHTML = `
+        <div class="thread-title">${esc(t.title)}</div>
+        <div class="thread-meta">
+          <span class="author">${esc(t.author)}</span>
+          <span class="date">${formatDate(t.created_at)}</span>
+        </div>
+        <div class="thread-body">${esc(t.body).substring(0, 200)}${t.body.length > 200 ? '...' : ''}</div>
+      `
+      card.addEventListener('click', () => openThread(t.id))
+      list.appendChild(card)
+    })
+  } catch (e) {
+    console.error('Failed to load threads', e)
   }
-  list.innerHTML = threads.map(t => `
-    <div class="thread-card" onclick="openThread('${t.id}')">
-      <div class="thread-title">${esc(t.title)}</div>
-      <div class="thread-meta">
-        <span class="author">${esc(t.author)}</span>
-        <span class="date">${formatDate(t.created_at)}</span>
-      </div>
-      <div class="thread-body">${esc(t.body).substring(0, 200)}${t.body.length > 200 ? '...' : ''}</div>
-      <div class="thread-replies" onclick="event.stopPropagation()">
-        <span onclick="openThread('${t.id}')">View Thread →</span>
-      </div>
-    </div>
-  `).join('')
 }
 
 async function renderThreadView() {
+  const container = document.getElementById('thread-view')
   try {
     const thread = await api(`/threads/${currentThreadId}`)
-    posts = await api(`/posts?thread_id=${currentThreadId}`)
-    const list = document.getElementById('thread-view')
+    const posts = await api(`/posts?thread_id=${currentThreadId}`)
 
-    list.innerHTML = `
+    container.innerHTML = `
       <div class="op-post">
         <div class="post-title">${esc(thread.title)}</div>
         <div class="post-meta">
@@ -94,42 +98,46 @@ async function renderThreadView() {
           </div>
         `).join('')}
       </div>
-      <form class="reply-form" onsubmit="addReply(event)">
+      <form id="reply-form" class="reply-form">
         <input type="text" name="author" placeholder="Name (optional)" maxlength="100" />
         <textarea name="body" placeholder="Reply..." required maxlength="5000"></textarea>
         <button type="submit" class="btn">Post</button>
       </form>
     `
+    document.getElementById('reply-form').addEventListener('submit', addReply)
   } catch (err) {
-    document.getElementById('thread-view').innerHTML = `<p class="error">Thread not found</p>`
+    container.innerHTML = `<p class="error">Thread not found</p>`
   }
 }
 
 // ── Actions ──
-window.startNewThread = () => {
+async function startNewThread() {
   const title = prompt('Thread title:')
   if (!title) return
   const body = prompt('Thread body:')
   if (!body) return
   const author = prompt('Your name (or leave blank for Anonymous):', '') || 'Anonymous'
-  api('/threads', { method: 'POST', body: { title, body, author } })
-    .then(() => render())
-    .catch(e => alert('Failed to create thread: ' + e))
+  try {
+    await api('/threads', { method: 'POST', body: { title, body, author } })
+    render()
+  } catch (e) {
+    alert('Failed to create thread: ' + e)
+  }
 }
 
-window.openThread = (id) => {
+function openThread(id) {
   currentThreadId = id
   view = 'thread'
   render()
 }
 
-window.goBack = () => {
+function goBack() {
   view = 'threads'
   currentThreadId = null
   render()
 }
 
-window.addReply = async (e) => {
+async function addReply(e) {
   e.preventDefault()
   const form = e.target
   const author = (form.author.value || 'Anonymous').trim()
@@ -137,7 +145,6 @@ window.addReply = async (e) => {
   if (!body) return
   try {
     await api('/posts', { method: 'POST', body: { thread_id: currentThreadId, body, author } })
-    form.reset()
     render()
   } catch (err) {
     alert('Failed to post reply')
