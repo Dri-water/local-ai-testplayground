@@ -17,58 +17,57 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
-app.get('/api/:table', async (req, res) => {
+// Threads
+app.get('/api/threads', async (req, res) => {
   try {
-    const { table } = req.params
-    const result = await pool.query(`SELECT * FROM ${table} ORDER BY created_at DESC`)
+    const result = await pool.query('SELECT * FROM threads ORDER BY created_at DESC')
     res.json(result.rows)
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 
-app.post('/api/:table', async (req, res) => {
+app.post('/api/threads', async (req, res) => {
   try {
-    const { table } = req.params
-    const values = req.body
-    const columns = Object.keys(values).join(', ')
-    const placeholders = Object.keys(values).map((_, i) => `$${i + 1}`).join(', ')
+    const { title, body, author } = req.body
     const result = await pool.query(
-      `INSERT INTO ${table} (${columns}) VALUES (${placeholders}) RETURNING *`,
-      Object.values(values)
+      'INSERT INTO threads (title, body, author) VALUES ($1, $2, $3) RETURNING *',
+      [title, body, author || 'Anonymous']
     )
     res.status(201).json(result.rows[0])
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 
-app.get('/api/:table/:id', async (req, res) => {
+app.get('/api/threads/:id', async (req, res) => {
   try {
-    const { table, id } = req.params
-    const result = await pool.query(`SELECT * FROM ${table} WHERE id = $1`, [id])
+    const result = await pool.query('SELECT * FROM threads WHERE id = $1', [req.params.id])
     if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' })
     res.json(result.rows[0])
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 
-app.patch('/api/:table/:id', async (req, res) => {
+// Posts
+app.get('/api/posts', async (req, res) => {
   try {
-    const { table, id } = req.params
-    const values = req.body
-    const sets = Object.keys(values).map((k, i) => `${k} = $${i + 1}`).join(', ')
-    const vals = [...Object.values(values), id]
+    const { thread_id } = req.query
+    if (thread_id) {
+      const result = await pool.query(
+        'SELECT * FROM posts WHERE thread_id = $1 ORDER BY created_at ASC',
+        [thread_id]
+      )
+      return res.json(result.rows)
+    }
+    const result = await pool.query('SELECT * FROM posts ORDER BY created_at DESC')
+    res.json(result.rows)
+  } catch (err) { res.status(500).json({ error: err.message }) }
+})
+
+app.post('/api/posts', async (req, res) => {
+  try {
+    const { thread_id, body, author } = req.body
     const result = await pool.query(
-      `UPDATE ${table} SET ${sets} WHERE id = $${vals.length} RETURNING *`,
-      vals
+      'INSERT INTO posts (thread_id, body, author) VALUES ($1, $2, $3) RETURNING *',
+      [thread_id, body, author || 'Anonymous']
     )
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' })
-    res.json(result.rows[0])
-  } catch (err) { res.status(500).json({ error: err.message }) }
-})
-
-app.delete('/api/:table/:id', async (req, res) => {
-  try {
-    const { table, id } = req.params
-    const result = await pool.query(`DELETE FROM ${table} WHERE id = $1 RETURNING *`, [id])
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' })
-    res.json({ deleted: result.rows[0] })
+    res.status(201).json(result.rows[0])
   } catch (err) { res.status(500).json({ error: err.message }) }
 })
 

@@ -1,28 +1,74 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 :root {
-  font-family: Inter, system-ui, sans-serif;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   line-height: 1.5;
-  font-weight: 400;
-  color: #213547;
-  background-color: #ffffff;
+  color: #333;
+  background-color: #f0e0d6;
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+body { min-width: 320px; min-height: 100vh; }
+
+.container { max-width: 900px; margin: 0 auto; padding: 1rem; }
+
+header {
+  display: flex; align-items: center; gap: 1rem; padding: 1rem 0;
+  border-bottom: 2px solid #d9bfb7; margin-bottom: 1rem;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+.logo {
+  font-size: 1.8rem; color: #af0a0f; letter-spacing: -0.5px;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: none;
+.btn {
+  padding: 0.5rem 1rem; border: 1px solid #d9bfb7; border-radius: 4px;
+  background: #d9bfb7; color: #333; cursor: pointer; font-size: 0.9rem;
 }
+.btn:hover { background: #c9afab; }
+.btn.back { font-size: 0.85rem; }
 
-a:hover {
-  color: #535bf2;
+.empty { text-align: center; padding: 3rem; color: #888; font-size: 1.1rem; }
+
+.thread-card {
+  background: #fff; border: 1px solid #d9bfb7; border-radius: 6px;
+  padding: 1rem; margin-bottom: 0.75rem; cursor: pointer;
+  transition: box-shadow 0.15s;
 }
+.thread-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+.thread-title { font-size: 1.15rem; font-weight: 700; color: #af0a0f; }
+.thread-meta { font-size: 0.8rem; color: #888; margin: 0.25rem 0; }
+.thread-body { margin: 0.5rem 0; color: #444; white-space: pre-wrap; }
+.thread-replies { font-size: 0.85rem; color: #af0a0f; }
+.thread-replies span { cursor: pointer; }
+
+.op-post {
+  background: #fff; border: 2px solid #d9bfb7; border-radius: 6px;
+  padding: 1.25rem; margin-bottom: 1rem;
+}
+.post-title { font-size: 1.3rem; font-weight: 700; color: #af0a0f; }
+.post-meta { font-size: 0.8rem; color: #888; margin: 0.25rem 0; }
+.post-body { margin-top: 0.5rem; white-space: pre-wrap; line-height: 1.6; }
+
+.reply {
+  background: #f7ecec; border-left: 3px solid #d9bfb7;
+  padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-radius: 0 4px 4px 0;
+}
+.reply-meta { font-size: 0.8rem; color: #888; }
+.reply-body { margin-top: 0.35rem; white-space: pre-wrap; line-height: 1.5; }
+
+.reply-form {
+  background: #fff; border: 1px solid #d9bfb7; border-radius: 6px;
+  padding: 1rem; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;
+}
+.reply-form input, .reply-form textarea {
+  padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95rem;
+  font-family: inherit;
+}
+.reply-form textarea { min-height: 80px; resize: vertical; }
+.reply-form .btn { align-self: flex-end; }
+
+.author { font-weight: 600; color: #117a65; }
+.date { margin-left: 0.75rem; }
+
+.error { color: #af0a0f; text-align: center; padding: 2rem; }
